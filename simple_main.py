@@ -16,6 +16,20 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+def log_user_request(message, action_type="message"):
+    """Логирование запросов пользователей"""
+    user = message.from_user
+    user_info = f"@{user.username}" if user.username else f"ID:{user.id}"
+    full_name = f"{user.first_name or ''} {user.last_name or ''}".strip()
+    if full_name:
+        user_info += f" ({full_name})"
+    
+    message_text = message.text if hasattr(message, 'text') and message.text else "N/A"
+    if len(message_text) > 100:
+        message_text = message_text[:100] + "..."
+    
+    logger.info(f"📨 {action_type.upper()} от {user_info}: '{message_text}'")
+
 # Инициализация бота
 BOT_TOKEN = os.environ.get('BOT_TOKEN')
 if not BOT_TOKEN:
@@ -34,6 +48,7 @@ def get_main_keyboard():
 @bot.message_handler(commands=['start'])
 def start_command(message):
     """Handle /start command"""
+    log_user_request(message, "команда /start")
     user_id = message.from_user.id
     
     # Create or get user
@@ -68,6 +83,7 @@ def start_command(message):
 @bot.message_handler(commands=['set_timezone'])
 def set_timezone_command(message):
     """Handle /set_timezone command"""
+    log_user_request(message, "команда /set_timezone")
     user_id = message.from_user.id
     user = User.get_or_create(user_id)
     
@@ -108,6 +124,7 @@ def set_timezone_command(message):
 @bot.message_handler(commands=['set_workday'])
 def set_workday_command(message):
     """Handle /set_workday command"""
+    log_user_request(message, "команда /set_workday")
     user_id = message.from_user.id
     user = User.get_or_create(user_id)
     
@@ -146,6 +163,7 @@ def set_workday_command(message):
 @bot.message_handler(func=lambda message: message.text == "🏖️ Отдых")
 def handle_rest_button(message):
     """Handle 'Отдых' button press"""
+    log_user_request(message, "кнопка Отдых")
     user_id = message.from_user.id
     user = User.get_or_create(user_id)
     
@@ -178,6 +196,7 @@ def handle_rest_button(message):
 @bot.message_handler(func=lambda message: message.text == "📊 Сводка")
 def handle_summary_button(message):
     """Handle 'Сводка' button press"""
+    log_user_request(message, "кнопка Сводка")
     user_id = message.from_user.id
     user = User.get_or_create(user_id)
     
@@ -257,6 +276,7 @@ def handle_summary_button(message):
 @bot.message_handler(func=lambda message: message.text == "❓ Помощь")
 def handle_help_button(message):
     """Handle 'Помощь' button press"""
+    log_user_request(message, "кнопка Помощь")
     text = """
 ❓ *Справка по использованию бота*
 
@@ -298,6 +318,7 @@ def handle_help_button(message):
 @bot.message_handler(func=lambda message: True)
 def handle_task_message(message):
     """Handle task messages"""
+    log_user_request(message, "создание задачи")
     user_id = message.from_user.id
     user = User.get_or_create(user_id)
     message_text = message.text
