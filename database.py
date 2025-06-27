@@ -52,6 +52,7 @@ def init_database():
                 user_id BIGINT NOT NULL,
                 task_name VARCHAR(500) NOT NULL,
                 comment TEXT,
+                original_message TEXT,
                 start_time TIMESTAMP NOT NULL,
                 end_time TIMESTAMP,
                 is_rest BOOLEAN DEFAULT FALSE,
@@ -59,6 +60,21 @@ def init_database():
                 FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
             )
         """)
+        
+        # Add column if it doesn't exist (for existing databases)
+        try:
+            cursor.execute("""
+                ALTER TABLE tasks ADD COLUMN IF NOT EXISTS original_message TEXT
+            """)
+        except Exception:
+            # PostgreSQL doesn't support IF NOT EXISTS for ADD COLUMN in older versions
+            try:
+                cursor.execute("""
+                    ALTER TABLE tasks ADD COLUMN original_message TEXT
+                """)
+            except Exception:
+                # Column already exists
+                pass
         
         # Index for better performance
         cursor.execute("""

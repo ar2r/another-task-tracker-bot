@@ -22,6 +22,29 @@ def extract_jira_ticket(text: str) -> Optional[str]:
     
     return None
 
+def extract_jira_url(text: str) -> Optional[str]:
+    """Extract full Jira URL from text"""
+    jira_url_pattern = r'(https?://[^/]+/browse/[A-Z]+-\d+)'
+    match = re.search(jira_url_pattern, text)
+    
+    if match:
+        return match.group(1)
+    
+    return None
+
+def create_jira_link(ticket: str, original_text: Optional[str] = None) -> str:
+    """Create clickable Jira link from ticket number"""
+    # If we have the original URL, use it
+    if original_text:
+        url = extract_jira_url(original_text)
+        if url:
+            return f"[{ticket}]({url})"
+    
+    # Default Jira URL format (can be configured later)
+    # Using a generic format that works for most Jira installations
+    default_url = f"https://jira.company.com/browse/{ticket}"
+    return f"[{ticket}]({default_url})"
+
 def parse_task_message(message: str) -> Tuple[str, Optional[str], bool]:
     """
     Parse task message to extract task name and comment
@@ -67,12 +90,19 @@ def parse_task_message(message: str) -> Tuple[str, Optional[str], bool]:
     
     return task_name, comment, False
 
-def format_task_for_display(task_name: str, is_jira: bool = None) -> str:
-    """Format task name for display in messages"""
+def format_task_for_display(task_name: str, is_jira: Optional[bool] = None, original_message: Optional[str] = None) -> str:
+    """Format task name for display in messages with clickable Jira links"""
     if is_jira is None:
         is_jira = extract_jira_ticket(task_name) is not None
     
-    # Always use markdown bold formatting for tasks
+    if is_jira:
+        ticket = extract_jira_ticket(task_name)
+        if ticket:
+            # Create clickable link for Jira ticket
+            jira_link = create_jira_link(ticket, original_message)
+            return f"**{jira_link}**"
+    
+    # Regular task without Jira link
     return f"**{task_name}**"
 
 def get_unique_comments(tasks) -> list:

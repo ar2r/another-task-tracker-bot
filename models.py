@@ -100,7 +100,8 @@ class User:
 class Task:
     def __init__(self, id: Optional[int], user_id: int, task_name: str, 
                  comment: Optional[str], start_time: datetime, 
-                 end_time: Optional[datetime] = None, is_rest: bool = False):
+                 end_time: Optional[datetime] = None, is_rest: bool = False,
+                 original_message: Optional[str] = None):
         self.id = id
         self.user_id = user_id
         self.task_name = task_name
@@ -108,10 +109,12 @@ class Task:
         self.start_time = start_time
         self.end_time = end_time
         self.is_rest = is_rest
+        self.original_message = original_message
     
     @classmethod
     def create(cls, user_id: int, task_name: str, comment: Optional[str] = None,
-               start_time: datetime = None, is_rest: bool = False) -> 'Task':
+               start_time: datetime = None, is_rest: bool = False, 
+               original_message: Optional[str] = None) -> 'Task':
         """Create new task"""
         if start_time is None:
             start_time = datetime.utcnow()
@@ -119,13 +122,13 @@ class Task:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                INSERT INTO tasks (user_id, task_name, comment, start_time, is_rest)
-                VALUES (%s, %s, %s, %s, %s)
+                INSERT INTO tasks (user_id, task_name, comment, original_message, start_time, is_rest)
+                VALUES (%s, %s, %s, %s, %s, %s)
                 RETURNING id
-            """, (user_id, task_name, comment, start_time, is_rest))
+            """, (user_id, task_name, comment, original_message, start_time, is_rest))
             
             task_id = cursor.fetchone()['id']
-            return cls(task_id, user_id, task_name, comment, start_time, None, is_rest)
+            return cls(task_id, user_id, task_name, comment, start_time, None, is_rest, original_message)
     
     @classmethod
     def get_active_task(cls, user_id: int) -> Optional['Task']:
@@ -133,7 +136,7 @@ class Task:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT id, user_id, task_name, comment, start_time, end_time, is_rest
+                SELECT id, user_id, task_name, comment, original_message, start_time, end_time, is_rest
                 FROM tasks 
                 WHERE user_id = %s AND end_time IS NULL 
                 ORDER BY start_time DESC LIMIT 1
@@ -148,7 +151,8 @@ class Task:
                     comment=task_data['comment'],
                     start_time=task_data['start_time'],
                     end_time=task_data['end_time'],
-                    is_rest=task_data['is_rest']
+                    is_rest=task_data['is_rest'],
+                    original_message=task_data.get('original_message')
                 )
             return None
     
@@ -171,7 +175,7 @@ class Task:
             end_utc = end_local.astimezone(pytz.utc)
             
             cursor.execute("""
-                SELECT id, user_id, task_name, comment, start_time, end_time, is_rest
+                SELECT id, user_id, task_name, comment, original_message, start_time, end_time, is_rest
                 FROM tasks 
                 WHERE user_id = %s 
                 AND start_time >= %s 
@@ -188,7 +192,8 @@ class Task:
                     comment=task_data['comment'],
                     start_time=task_data['start_time'],
                     end_time=task_data['end_time'],
-                    is_rest=task_data['is_rest']
+                    is_rest=task_data['is_rest'],
+                    original_message=task_data.get('original_message')
                 ))
             
             return tasks
@@ -216,19 +221,21 @@ class Task:
         end = self.end_time or datetime.utcnow()
         return end - self.start_time
     
-    def update_with_same_time(self, task_name: str, comment: Optional[str] = None) -> bool:
+    def update_with_same_time(self, task_name: str, comment: Optional[str] = None, 
+                            original_message: Optional[str] = None) -> bool:
         """Update task when time is the same (overwrite previous)"""
         try:
             with get_db() as conn:
                 cursor = conn.cursor()
                 cursor.execute("""
                     UPDATE tasks 
-                    SET task_name = %s, comment = %s 
+                    SET task_name = %s, comment = %s, original_message = %s 
                     WHERE id = %s
-                """, (task_name, comment, self.id))
+                """, (task_name, comment, original_message, self.id))
                 
                 self.task_name = task_name
                 self.comment = comment
+                self.original_message = original_message
                 return True
         except Exception as e:
             logger.error(f"Error updating task: {e}")

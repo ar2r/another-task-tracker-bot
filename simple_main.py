@@ -206,7 +206,7 @@ def handle_summary_button(message):
     
     if current_task:
         current_duration = current_task.get_duration()
-        current_display = format_task_for_display(current_task.task_name, current_task.task_name.startswith(('PROJ-', 'TASK-', 'DEV-', 'BUG-')))
+        current_display = format_task_for_display(current_task.task_name, original_message=current_task.original_message)
         message_parts.append(f"\n🔄 *Текущая задача:*")
         message_parts.append(f"**{current_display}** (начата в {format_time_for_user(current_task.start_time, user)}, выполняется {format_duration(current_duration)})")
     
@@ -227,7 +227,8 @@ def handle_summary_button(message):
             task_groups[task.task_name] = {
                 'duration': duration,
                 'tasks': [task],
-                'is_rest': task.is_rest
+                'is_rest': task.is_rest,
+                'original_message': task.original_message
             }
     
     # Add tasks list
@@ -235,7 +236,7 @@ def handle_summary_button(message):
     
     for task_name, group in task_groups.items():
         duration_str = format_duration(group['duration'])
-        task_display = format_task_for_display(task_name)
+        task_display = format_task_for_display(task_name, original_message=group.get('original_message'))
         
         if group['is_rest']:
             message_parts.append(f"• **{task_display}** — {duration_str}")
@@ -327,11 +328,17 @@ def handle_task_message(message):
     # Check if this is the same task at the same time (update scenario)
     if current_task and current_task.task_name == task_name:
         # Check if start time is very close (within 1 minute)
-        time_diff = abs((start_time - current_task.start_time).total_seconds())
+        # Ensure both datetimes have timezone info for comparison
+        current_start = current_task.start_time
+        if current_start.tzinfo is None:
+            current_start = pytz.UTC.localize(current_start)
+        if start_time.tzinfo is None:
+            start_time = pytz.UTC.localize(start_time)
+        time_diff = abs((start_time - current_start).total_seconds())
         if time_diff < 60:
             # Update existing task
-            if current_task.update_with_same_time(task_name, comment):
-                task_display = format_task_for_display(task_name, is_jira)
+            if current_task.update_with_same_time(task_name, comment, message_text):
+                task_display = format_task_for_display(task_name, is_jira, message_text)
                 text = f"✏️ Задача **{task_display}** обновлена"
                 if comment:
                     text += f" с комментарием: _{comment}_"
@@ -349,10 +356,10 @@ def handle_task_message(message):
         previous_info = ""
     
     # Create new task
-    new_task = Task.create(user_id, task_name, comment, start_time)
+    new_task = Task.create(user_id, task_name, comment, start_time, original_message=message_text)
     
     if new_task:
-        task_display = format_task_for_display(task_name, is_jira)
+        task_display = format_task_for_display(task_name, is_jira, message_text)
         start_time_str = format_time_for_user(start_time, user)
         
         text = f"{previous_info}✅ Начата задача **{task_display}**"
