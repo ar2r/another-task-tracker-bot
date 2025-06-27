@@ -4,7 +4,6 @@ version = "0.1.0"
 description = "Add your description here"
 requires-python = ">=3.11"
 dependencies = [
-    "flask>=3.1.1",
     "psycopg2-binary>=2.9.10",
     "pytelegrambotapi>=4.27.0",
     "pytest>=8.4.1",
