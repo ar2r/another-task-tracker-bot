@@ -347,7 +347,7 @@ async def auto_end_tasks_job(context: ContextTypes.DEFAULT_TYPE):
             if active_task:
                 should_end, end_time = should_auto_end_task(user, active_task.start_time)
                 
-                if should_end:
+                if should_end and end_time:
                     active_task.end_task(end_time)
                     
                     # Send notification to user

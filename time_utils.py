@@ -50,7 +50,7 @@ def get_workday_end_time(user, local_date: datetime) -> datetime:
     
     return workday_end_local.astimezone(pytz.utc)
 
-def should_auto_end_task(user, task_start_time: datetime) -> Tuple[bool, datetime]:
+def should_auto_end_task(user, task_start_time: datetime) -> Tuple[bool, Optional[datetime]]:
     """
     Check if task should be auto-ended and return end time
     Returns (should_end, end_time)
@@ -64,20 +64,20 @@ def should_auto_end_task(user, task_start_time: datetime) -> Tuple[bool, datetim
     task_start_local = task_start_time.astimezone(user_tz)
     
     # Get workday end for the same date
-    workday_end_local = datetime.combine(
+    workday_end_naive = datetime.combine(
         task_start_local.date(), 
         user.workday_end
     )
-    workday_end_local = user_tz.localize(workday_end_local)
+    workday_end_local = user_tz.localize(workday_end_naive)
     
     # Check if task started after workday end
     if task_start_local.time() > user.workday_end:
         # End at 23:59 of the same day
-        end_time_local = datetime.combine(
+        end_time_naive = datetime.combine(
             task_start_local.date(),
             time(23, 59)
         )
-        end_time_local = user_tz.localize(end_time_local)
+        end_time_local = user_tz.localize(end_time_naive)
         return True, end_time_local.astimezone(pytz.utc)
     
     # Check if current time is past workday end
@@ -89,6 +89,9 @@ def should_auto_end_task(user, task_start_time: datetime) -> Tuple[bool, datetim
 
 def format_time_for_user(dt: datetime, user) -> str:
     """Format datetime for user's timezone"""
+    if dt is None:
+        return "N/A"
+    
     if dt.tzinfo is None:
         dt = pytz.utc.localize(dt)
     
@@ -96,7 +99,7 @@ def format_time_for_user(dt: datetime, user) -> str:
     local_time = dt.astimezone(user_tz)
     return local_time.strftime("%H:%M")
 
-def create_datetime_from_time(user, target_time: time, reference_date: datetime = None) -> datetime:
+def create_datetime_from_time(user, target_time: time, reference_date: Optional[datetime] = None) -> datetime:
     """Create datetime from time in user's timezone"""
     if reference_date is None:
         reference_date = datetime.now()
