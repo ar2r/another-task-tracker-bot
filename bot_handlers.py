@@ -321,6 +321,7 @@ async def auto_end_tasks_job(context: ContextTypes.DEFAULT_TYPE):
     """Background job to auto-end tasks that exceed workday"""
     try:
         from models import User, Task
+        from database import get_db
         
         # Get all users with active tasks
         with get_db() as conn:

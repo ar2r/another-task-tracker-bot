@@ -133,14 +133,23 @@ class Task:
         with get_db() as conn:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT * FROM tasks 
+                SELECT id, user_id, task_name, comment, start_time, end_time, is_rest
+                FROM tasks 
                 WHERE user_id = %s AND end_time IS NULL 
                 ORDER BY start_time DESC LIMIT 1
             """, (user_id,))
             
             task_data = cursor.fetchone()
             if task_data:
-                return cls(**task_data)
+                return cls(
+                    id=task_data['id'],
+                    user_id=task_data['user_id'],
+                    task_name=task_data['task_name'],
+                    comment=task_data['comment'],
+                    start_time=task_data['start_time'],
+                    end_time=task_data['end_time'],
+                    is_rest=task_data['is_rest']
+                )
             return None
     
     @classmethod
@@ -162,7 +171,8 @@ class Task:
             end_utc = end_local.astimezone(pytz.utc)
             
             cursor.execute("""
-                SELECT * FROM tasks 
+                SELECT id, user_id, task_name, comment, start_time, end_time, is_rest
+                FROM tasks 
                 WHERE user_id = %s 
                 AND start_time >= %s 
                 AND start_time <= %s
@@ -171,7 +181,15 @@ class Task:
             
             tasks = []
             for task_data in cursor.fetchall():
-                tasks.append(cls(**task_data))
+                tasks.append(cls(
+                    id=task_data['id'],
+                    user_id=task_data['user_id'],
+                    task_name=task_data['task_name'],
+                    comment=task_data['comment'],
+                    start_time=task_data['start_time'],
+                    end_time=task_data['end_time'],
+                    is_rest=task_data['is_rest']
+                ))
             
             return tasks
     
