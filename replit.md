@@ -163,13 +163,15 @@ Preferred communication style: Simple, everyday language.
   - Вся активность пользователей теперь отслеживается в консоли для мониторинга
   - Система логирования помогает анализировать использование бота и выявлять проблемы
 
-- June 27, 2025: Отключены health check серверы для деплоя
-  - Удалены файлы health_server.py, web_server.py, deploy_server.py
-  - Удалены веб-интерфейсы для логов и мониторинга
-  - Удалена документация по деплою (DEPLOYMENT_GUIDE.md, DEPLOYMENT_LOGS.md)
-  - Проект теперь использует только простой Telegram бот без веб-серверов
-  - Настроен единственный воркфлоу "Telegram Bot" для запуска simple_main.py
-  - Логирование остается в файлы logs/telegram_bot.log
+- June 27, 2025: Создана полная система для деплоя с health check endpoints
+  - Добавлен app.py - объединенное приложение с Telegram ботом и Flask веб-сервером
+  - Реализованы health check endpoints: /, /health, /status для мониторинга
+  - Создан wsgi.py для production деплоя с gunicorn
+  - Добавлен run_gunicorn.py для production запуска
+  - Настроен workflow "Web App" на порту 5000 с корректной конфигурацией
+  - Flask сервер работает в отдельном потоке, Telegram бот в основном потоке
+  - Все endpoints возвращают JSON статус: bot_running, web_server_running, uptime
+  - Проект готов для деплоя на cloud платформы с требованиями HTTP endpoints
 
 ## Changelog
 
