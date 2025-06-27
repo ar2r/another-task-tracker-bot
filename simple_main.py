@@ -1,5 +1,6 @@
 import os
 import logging
+from logging.handlers import RotatingFileHandler
 import telebot
 from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from database import init_database
@@ -9,12 +10,43 @@ from time_utils import format_duration, format_time_for_user, create_datetime_fr
 from datetime import datetime, time, timedelta
 import pytz
 
-# Настройка логирования
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-logger = logging.getLogger(__name__)
+# Настройка логирования для консоли и файла
+def setup_logging():
+    """Настройка логирования с записью в файл для деплоя"""
+    # Создаем директорию для логов
+    os.makedirs('logs', exist_ok=True)
+    
+    # Настройка root logger
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.INFO)
+    
+    # Очищаем существующие handlers
+    root_logger.handlers.clear()
+    
+    # Форматтер для логов
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    
+    # Console handler (для разработки)
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.INFO)
+    console_handler.setFormatter(formatter)
+    root_logger.addHandler(console_handler)
+    
+    # File handler (для деплоя) - ротация файлов
+    file_handler = RotatingFileHandler(
+        'logs/telegram_bot.log',
+        maxBytes=10*1024*1024,  # 10MB
+        backupCount=5,
+        encoding='utf-8'
+    )
+    file_handler.setLevel(logging.INFO)
+    file_handler.setFormatter(formatter)
+    root_logger.addHandler(file_handler)
+    
+    return logging.getLogger(__name__)
+
+# Инициализация логирования
+logger = setup_logging()
 
 def log_user_request(message, action_type="message"):
     """Логирование запросов пользователей"""
