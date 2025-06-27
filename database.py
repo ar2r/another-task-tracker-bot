@@ -38,7 +38,7 @@ def init_database():
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 user_id BIGINT PRIMARY KEY,
-                timezone VARCHAR(50) DEFAULT 'UTC',
+                timezone VARCHAR(50) DEFAULT 'Europe/Moscow',
                 workday_start TIME DEFAULT '09:00',
                 workday_end TIME DEFAULT '18:00',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

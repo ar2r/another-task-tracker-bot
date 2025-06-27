@@ -7,7 +7,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class User:
-    def __init__(self, user_id: int, timezone: str = 'UTC', 
+    def __init__(self, user_id: int, timezone: str = 'Europe/Moscow', 
                  workday_start: time = time(9, 0), workday_end: time = time(18, 0)):
         self.user_id = user_id
         self.timezone = timezone
