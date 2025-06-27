@@ -1,6 +1,5 @@
-from telegram import Update, ReplyKeyboardMarkup, KeyboardButton
-from telegram.ext import ContextTypes
-from telegram.constants import ParseMode
+from telegram import Update, ReplyKeyboardMarkup, KeyboardButton, ParseMode
+from telegram.ext import CallbackContext
 from datetime import datetime, time, timedelta
 import pytz
 import logging
@@ -22,7 +21,7 @@ def get_main_keyboard():
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
-async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def start_command(update: Update, context: CallbackContext):
     """Handle /start command"""
     user_id = update.effective_user.id
     
@@ -72,7 +71,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         reply_markup=get_main_keyboard()
     )
 
-async def set_timezone_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+def set_timezone_command(update: Update, context: CallbackContext):
     """Handle /set_timezone command"""
     user_id = update.effective_user.id
     user = User.get_or_create(user_id)
