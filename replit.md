@@ -163,6 +163,14 @@ Preferred communication style: Simple, everyday language.
   - Вся активность пользователей теперь отслеживается в консоли для мониторинга
   - Система логирования помогает анализировать использование бота и выявлять проблемы
 
+- June 27, 2025: Отключены health check серверы для деплоя
+  - Удалены файлы health_server.py, web_server.py, deploy_server.py
+  - Удалены веб-интерфейсы для логов и мониторинга
+  - Удалена документация по деплою (DEPLOYMENT_GUIDE.md, DEPLOYMENT_LOGS.md)
+  - Проект теперь использует только простой Telegram бот без веб-серверов
+  - Настроен единственный воркфлоу "Telegram Bot" для запуска simple_main.py
+  - Логирование остается в файлы logs/telegram_bot.log
+
 ## Changelog
 
 - June 27, 2025: Initial setup and complete implementation
