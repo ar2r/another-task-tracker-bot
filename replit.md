@@ -172,6 +172,15 @@ Preferred communication style: Simple, everyday language.
   - Добавлена подробная документация DEPLOYMENT_LOGS.md с инструкциями
   - Настроены два воркфлоу: Telegram Bot и Log Viewer для полного мониторинга
 
+- June 27, 2025: Решены проблемы деплоя в Replit с созданием health check серверов
+  - Создан health_server.py - минимальный Flask сервер для health check
+  - Создан web_server.py - полноценный веб-интерфейс с информацией о боте
+  - Создан deploy_server.py - оптимизированный сервер для быстрого запуска
+  - Добавлены все необходимые HTTP endpoints: /, /health, /status, /api/status
+  - Создано подробное руководство DEPLOYMENT_GUIDE.md с пошаговыми инструкциями
+  - Настроена конфигурация для Replit Deployments с правильными портами
+  - Решена проблема "Health check failure" и "No web server is running"
+
 ## Changelog
 
 - June 27, 2025: Initial setup and complete implementation
