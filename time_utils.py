@@ -36,9 +36,12 @@ def format_duration(duration: timedelta) -> str:
     minutes = (total_seconds % 3600) // 60
     
     if hours > 0:
-        return f"{hours}ч {minutes}м"
+        if minutes > 0:
+            return f"{hours} ч {minutes} мин"
+        else:
+            return f"{hours} ч"
     else:
-        return f"{minutes}м"
+        return f"{minutes} мин"
 
 def get_workday_end_time(user, local_date: datetime) -> datetime:
     """Get workday end time for a specific date in user's timezone"""

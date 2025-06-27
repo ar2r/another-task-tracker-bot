@@ -27,45 +27,53 @@ def parse_task_message(message: str) -> Tuple[str, Optional[str], bool]:
     Parse task message to extract task name and comment
     Returns (task_name, comment, is_jira_link)
     """
+    if not message:
+        return "", None, False
+        
     message = message.strip()
     
-    # Check if it's a Jira URL
-    jira_url_pattern = r'https?://[^/]+/browse/[A-Z]+-\d+'
-    if re.match(jira_url_pattern, message.split()[0]):
-        parts = message.split(' ', 1)
-        jira_url = parts[0]
-        comment = parts[1] if len(parts) > 1 else None
-        return jira_url, comment, True
+    # Check if message contains Jira ticket or URL
+    jira_ticket = extract_jira_ticket(message)
+    if jira_ticket:
+        # If it's a Jira URL, extract ticket and comment
+        if message.startswith('http'):
+            parts = message.split(' - ', 1) if ' - ' in message else message.split(' ', 1)
+            comment = parts[1].strip() if len(parts) > 1 and parts[1].strip() else None
+            return jira_ticket, comment, True
+        else:
+            # If message contains Jira ticket, extract it and comment
+            if ' - ' in message:
+                parts = message.split(' - ', 1)
+                comment = parts[1].strip() if len(parts) > 1 else None
+            else:
+                # Find position of ticket and get everything after it as comment
+                ticket_match = re.search(r'\b([A-Z]+-\d+)\b', message)
+                if ticket_match:
+                    start_pos = ticket_match.end()
+                    remaining = message[start_pos:].strip()
+                    comment = remaining[1:].strip() if remaining.startswith('-') else (remaining if remaining else None)
+                else:
+                    comment = None
+            return jira_ticket, comment, True
     
-    # Check for single word task (no spaces) or extract first word
-    parts = message.split(' ', 1)
-    task_name = parts[0].lower()  # Convert to lowercase as specified
-    comment = parts[1] if len(parts) > 1 else None
+    # Parse regular task with optional comment (separated by ' - ')
+    if ' - ' in message:
+        parts = message.split(' - ', 1)
+        task_name = parts[0].strip()
+        comment = parts[1].strip() if len(parts) > 1 else None
+    else:
+        task_name = message.strip()
+        comment = None
     
-    # Check if task name looks like a Jira ticket
-    ticket_number = extract_jira_ticket(task_name)
-    is_jira = ticket_number is not None
-    
-    return task_name, comment, is_jira
+    return task_name, comment, False
 
 def format_task_for_display(task_name: str, is_jira: bool = None) -> str:
     """Format task name for display in messages"""
     if is_jira is None:
         is_jira = extract_jira_ticket(task_name) is not None
     
-    if is_jira:
-        # If it's a Jira URL, extract ticket number for display
-        if task_name.startswith('http'):
-            ticket = extract_jira_ticket(task_name)
-            if ticket:
-                return f"[{ticket}]({task_name})"
-        else:
-            # If it's just a ticket number, make it a placeholder link
-            ticket = extract_jira_ticket(task_name)
-            if ticket:
-                return f"`{ticket}`"
-    
-    return f"`{task_name}`"
+    # Always use markdown bold formatting for tasks
+    return f"**{task_name}**"
 
 def get_unique_comments(tasks) -> list:
     """Get unique comments from a list of tasks"""
