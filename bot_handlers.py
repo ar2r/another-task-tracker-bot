@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 def get_main_keyboard():
     """Get main keyboard with buttons"""
     keyboard = [
-        [KeyboardButton("Отдых"), KeyboardButton("Сводка")]
+        [KeyboardButton("Отдых"), KeyboardButton("Сводка")],
+        [KeyboardButton("Помощь")]
     ]
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
 
@@ -239,6 +240,49 @@ async def handle_summary_button(update: Update, context: ContextTypes.DEFAULT_TY
         reply_markup=get_main_keyboard()
     )
 
+async def handle_help_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Handle 'Помощь' button press"""
+    help_text = """
+📋 **Список доступных команд:**
+
+**Основные команды:**
+• `/start` — Запустить бота и получить приветствие
+• `/set_timezone <часовой_пояс>` — Настроить часовой пояс
+  Пример: `/set_timezone Europe/Moscow`
+• `/set_workday <начало> <конец>` — Настроить рабочий день
+  Пример: `/set_workday 09:00 18:00`
+
+**Кнопки:**
+• **Отдых** — Завершить текущую задачу и начать отдых
+• **Сводка** — Показать отчет за день и активную задачу
+• **Помощь** — Показать этот список команд
+
+**Трекинг задач:**
+• Просто отправьте название задачи для начала работы
+• Поддерживаются Jira-ссылки (автоматически извлекается номер тикета)
+• Можно указать время начала: `14:00 Название задачи`
+• Добавляйте комментарии через дефис: `Задача - мой комментарий`
+
+**Примеры:**
+• `Разработка фичи`
+• `14:30 Исправление бага`
+• `https://company.atlassian.net/browse/PROJ-123`
+• `Совещание - обсуждение планов`
+
+**Автоматические функции:**
+• Задачи завершаются автоматически в конце рабочего дня
+• Время отображается в вашем часовом поясе
+• Поддержка многих часовых поясов мира
+
+❓ **Нужна помощь?** Просто начните писать, и бот поможет!
+"""
+    
+    await update.message.reply_text(
+        help_text,
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=get_main_keyboard()
+    )
+
 async def handle_task_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle task messages"""
     user_id = update.effective_user.id
@@ -345,7 +389,12 @@ async def auto_end_tasks_job(context: ContextTypes.DEFAULT_TYPE):
             
             active_task = Task.get_active_task(user.user_id)
             if active_task:
-                should_end, end_time = should_auto_end_task(user, active_task.start_time)
+                # Ensure start_time is timezone-aware
+                start_time = active_task.start_time
+                if start_time.tzinfo is None:
+                    start_time = pytz.utc.localize(start_time)
+                
+                should_end, end_time = should_auto_end_task(user, start_time)
                 
                 if should_end and end_time:
                     active_task.end_task(end_time)

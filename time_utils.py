@@ -82,8 +82,12 @@ def should_auto_end_task(user, task_start_time: datetime) -> Tuple[bool, Optiona
     
     # Check if current time is past workday end
     now_utc = datetime.utcnow()
-    now_utc_aware = pytz.utc.localize(now_utc)
+    if now_utc.tzinfo is None:
+        now_utc_aware = pytz.utc.localize(now_utc)
+    else:
+        now_utc_aware = now_utc
     now_local = now_utc_aware.astimezone(user_tz)
+    
     if now_local >= workday_end_local:
         return True, workday_end_local.astimezone(pytz.utc)
     

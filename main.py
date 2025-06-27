@@ -5,7 +5,7 @@ from telegram.ext import JobQueue
 from database import init_database
 from bot_handlers import (
     start_command, set_timezone_command, set_workday_command,
-    handle_rest_button, handle_summary_button, handle_task_message,
+    handle_rest_button, handle_summary_button, handle_help_button, handle_task_message,
     auto_end_tasks_job
 )
 
@@ -40,6 +40,7 @@ def main():
     # Add button handlers
     application.add_handler(MessageHandler(filters.Regex("^Отдых$"), handle_rest_button))
     application.add_handler(MessageHandler(filters.Regex("^Сводка$"), handle_summary_button))
+    application.add_handler(MessageHandler(filters.Regex("^Помощь$"), handle_help_button))
     
     # Add task message handler (for all other text messages)
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_task_message))
